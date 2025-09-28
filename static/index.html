@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>EZFW CALCULATOR</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #e6f0fa;
+            margin: 0;
+            padding: 0;
+            text-transform: uppercase;
+            /* All text uppercase */
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+            color: #1a2b4c;
+            display: inline-block;
+        }
+
+        /* Top bar with print button */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 900px;
+            margin: 20px auto 0 auto;
+            padding: 0 10px;
+        }
+
+        .print-btn {
+            background: #1a2b4c;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .print-btn:hover {
+            background: #334a70;
+        }
+
+        /* Form Container */
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #1a2b4c;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            text-transform: uppercase;
+            /* Uppercase as you type */
+        }
+
+        /* Wide Body Fields: two inputs in one row */
+        .wide-field {
+            grid-column: span 2;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        /* Results Table */
+        .results-container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+
+        th {
+            background-color: #1a2b4c;
+            color: #ffffff;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f6fc;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="top-bar">
+        <h1>EZFW CALCULATOR</h1>
+        <button class="print-btn" onclick="window.print()">SAVE / PRINT PDF</button>
+    </div>
+
+    <div class="container">
+        <!-- Flight Info -->
+        <div>
+            <label for="flightNumber">FLIGHT NUMBER</label>
+            <input type="text" id="flightNumber">
+        </div>
+        <div>
+            <label for="origin">ORIGIN</label>
+            <input type="text" id="origin">
+        </div>
+        <div>
+            <label for="destination">DESTINATION</label>
+            <input type="text" id="destination">
+        </div>
+        <div>
+            <label for="std">STD (UTC)</label>
+            <input type="text" id="std">
+        </div>
+
+        <!-- Aircraft Type -->
+        <div>
+            <label for="aircraftType">AIRCRAFT TYPE</label>
+            <select id="aircraftType">
+                <option value="Narrow">Narrow</option>
+                <option value="Wide">Wide</option>
+            </select>
+        </div>
+
+        <!-- Weights -->
+        <div>
+            <label for="dow">DOW</label>
+            <input type="number" id="dow" step="0.01" value="0">
+        </div>
+        <div>
+            <label for="totalPax">TOTAL PAX</label>
+            <input type="number" id="totalPax" step="0.01" value="0">
+        </div>
+        <div>
+            <label for="avgPaxWeight">AVG PAX WEIGHT</label>
+            <input type="number" id="avgPaxWeight" step="0.01" value="0">
+        </div>
+        <div>
+            <label for="avgBags">AVG BAGS PER PAX</label>
+            <input type="number" id="avgBags" step="0.01" value="0">
+        </div>
+        <div>
+            <label for="avgBagsWeight">AVG BAG WEIGHT</label>
+            <input type="number" id="avgBagsWeight" step="0.01" value="0">
+        </div>
+        <div>
+            <label for="cargoWeight">CARGO WEIGHT</label>
+            <input type="number" id="cargoWeight" step="0.01" value="0">
+        </div>
+        <div>
+            <label for="serviceWeight">SERVICE WEIGHT</label>
+            <input type="number" id="serviceWeight" step="0.01" value="0">
+        </div>
+
+        <!-- Wide Body Fields: single row -->
+        <div class="wide-field" id="wideBodyFields" style="display:none;">
+            <div>
+                <label for="avgULDWeight">AVG ULD TARE WEIGHT</label>
+                <input type="number" id="avgULDWeight" step="0.01" value="0">
+            </div>
+            <div>
+                <label for="bagsPerULD">AVG BAGS PER ULD</label>
+                <input type="number" id="bagsPerULD" step="0.01" value="0">
+            </div>
+        </div>
+    </div>
+
+    <!-- RESULTS TABLE BELOW THE FORM -->
+    <div class="results-container">
+        <table>
+            <tr>
+                <th>FLIGHT</th>
+                <th>TOTAL PAX</th>
+                <th>TOTAL PAX WEIGHT</th>
+                <th>TOTAL BAGS</th>
+                <th>TOTAL BAG WEIGHT</th>
+                <th>CARGO WEIGHT</th>
+                <th>SERVICE WEIGHT</th>
+                <th>TOTAL ULDS</th>
+                <th>TOTAL ULD TARE</th>
+                <th>EZFW</th>
+                <th>EZFW ROUNDED</th>
+            </tr>
+            <tr>
+                <td id="flightDetails"></td>
+                <td id="totalPaxDisplay">0</td>
+                <td id="totalPaxWeight">0</td>
+                <td id="totalBags">0</td>
+                <td id="totalBagWeight">0</td>
+                <td id="cargoWeightDisplay">0</td>
+                <td id="serviceWeightDisplay">0</td>
+                <td id="totalULDs">0</td>
+                <td id="totalULDTare">0</td>
+                <td id="ezfw">0</td>
+                <td id="zfw">0</td>
+            </tr>
+        </table>
+    </div>
+
+    <script>
+        const aircraftType = document.getElementById("aircraftType");
+        const wideFields = document.getElementById("wideBodyFields");
+        const inputs = document.querySelectorAll("input, select");
+
+        function calculate() {
+            const flightNumber = document.getElementById("flightNumber").value;
+            const origin = document.getElementById("origin").value;
+            const destination = document.getElementById("destination").value;
+            const std = document.getElementById("std").value;
+
+            document.getElementById("flightDetails").innerText =
+                `${flightNumber} (${origin}→${destination}) STD: ${std}`;
+
+            let dow = parseFloat(document.getElementById("dow").value) || 0;
+            let totalPax = parseFloat(document.getElementById("totalPax").value) || 0;
+            let avgPaxWeight = parseFloat(document.getElementById("avgPaxWeight").value) || 0;
+            let avgBags = parseFloat(document.getElementById("avgBags").value) || 0;
+            let avgBagsWeight = parseFloat(document.getElementById("avgBagsWeight").value) || 0;
+            let cargoWeight = parseFloat(document.getElementById("cargoWeight").value) || 0;
+            let serviceWeight = parseFloat(document.getElementById("serviceWeight").value) || 0;
+
+            let totalPaxWeight = Math.ceil(totalPax * avgPaxWeight);
+            let totalBags = Math.ceil(totalPax * avgBags);
+            let totalBagWeight = Math.ceil(totalBags * avgBagsWeight);
+
+            let totalULDs = 0, totalULDTare = 0;
+            if (aircraftType.value === "Wide") {
+                let avgULDWeight = parseFloat(document.getElementById("avgULDWeight").value) || 0;
+                let bagsPerULD = parseFloat(document.getElementById("bagsPerULD").value) || 1;
+                totalULDs = Math.ceil(totalBags / bagsPerULD);
+                totalULDTare = totalULDs * avgULDWeight;
+            }
+
+            let ezfw = dow + totalPaxWeight + totalBagWeight + cargoWeight + serviceWeight + totalULDTare;
+            let zfw = Math.ceil(ezfw / 100) * 100;
+
+            document.getElementById("totalPaxDisplay").innerText = totalPax;
+            document.getElementById("totalPaxWeight").innerText = totalPaxWeight;
+            document.getElementById("totalBags").innerText = totalBags;
+            document.getElementById("totalBagWeight").innerText = totalBagWeight;
+            document.getElementById("cargoWeightDisplay").innerText = cargoWeight;
+            document.getElementById("serviceWeightDisplay").innerText = serviceWeight;
+            document.getElementById("totalULDs").innerText = totalULDs;
+            document.getElementById("totalULDTare").innerText = totalULDTare;
+            document.getElementById("ezfw").innerText = ezfw.toFixed(2);
+            document.getElementById("zfw").innerText = zfw;
+        }
+
+        aircraftType.addEventListener("change", () => {
+            wideFields.style.display = (aircraftType.value === "Wide") ? "grid" : "none";
+            calculate();
+        });
+
+        inputs.forEach(input => input.addEventListener("input", calculate));
+        window.onload = calculate;
+    </script>
+
+</body>
+
+</html>
