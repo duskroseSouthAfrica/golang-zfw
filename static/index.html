@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <title>EZFW CALCULATOR</title>
     <style>
-        /* Global Styles */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #e6f0fa;
@@ -21,7 +20,6 @@
             display: inline-block;
         }
 
-        /* Top bar with buttons */
         .top-bar {
             display: flex;
             justify-content: space-between;
@@ -31,25 +29,27 @@
             padding: 0 10px;
         }
 
-        .top-bar button {
-            margin-left: 10px;
+        .button-group {
+            display: flex;
+            gap: 10px;
         }
 
-        .print-btn {
-            background: #1a2b4c;
-            color: #fff;
+        button {
+            padding: 10px 20px;
+            background-color: #1a2b4c;
+            color: white;
             border: none;
-            padding: 8px 16px;
             border-radius: 6px;
-            font-size: 14px;
             cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
         }
 
-        .print-btn:hover {
-            background: #334a70;
+        button:hover {
+            background-color: #2d4a7c;
         }
 
-        /* Form Container */
         .container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, max-content));
@@ -67,31 +67,41 @@
             font-weight: bold;
             margin-bottom: 5px;
             color: #1a2b4c;
-            white-space: nowrap; /* Prevent wrapping */
+            white-space: nowrap;
         }
 
         input,
-        select {
+        select,
+        textarea {
             width: 100%;
-            max-width: 180px; /* prevent overly wide inputs */
+            max-width: 180px;
             padding: 8px;
             border: 1px solid #ccc;
             border-radius: 6px;
             margin-bottom: 10px;
             font-size: 14px;
-            text-transform: uppercase;
             box-sizing: border-box;
         }
 
-        /* Wide Body Fields: always side by side */
+        textarea {
+            resize: vertical;
+        }
+
         .wide-field {
             grid-column: span 2;
             display: grid;
-            grid-template-columns: auto auto; /* two columns side by side */
+            grid-template-columns: auto auto;
             gap: 20px;
         }
 
-        /* Results Table */
+        .bottom-fields {
+            grid-column: span 2;
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
         .results-container {
             max-width: 900px;
             margin: 10px auto;
@@ -130,25 +140,33 @@
 
     <div class="top-bar">
         <h1>EZFW CALCULATOR</h1>
-        <div>
-            <button class="print-btn" onclick="window.print()">SAVE / PRINT PDF</button>
-            <button class="print-btn" onclick="sendEmail()">SEND EMAIL</button>
+        <div class="button-group">
+            <button onclick="window.print()">PRINT</button>
+            <button onclick="saveData()">SAVE</button>
         </div>
     </div>
 
     <div class="container">
+        <!-- Aircraft Selection -->
+        <div>
+            <label for="aircraftSelect">SELECT AIRCRAFT</label>
+            <select id="aircraftSelect">
+                <option value="">--Select--</option>
+            </select>
+        </div>
+
         <!-- Flight Info -->
         <div>
             <label for="flightNumber">FLIGHT NUMBER</label>
-            <input type="text" id="flightNumber">
+            <input type="text" id="flightNumber" style="text-transform:uppercase;">
         </div>
         <div>
             <label for="origin">ORIGIN</label>
-            <input type="text" id="origin">
+            <input type="text" id="origin" style="text-transform:uppercase;">
         </div>
         <div>
             <label for="destination">DESTINATION</label>
-            <input type="text" id="destination">
+            <input type="text" id="destination" style="text-transform:uppercase;">
         </div>
         <div>
             <label for="std">STD (UTC)</label>
@@ -162,16 +180,17 @@
                 <option value="Narrow">Narrow</option>
                 <option value="Wide">Wide</option>
             </select>
+            <input type="text" id="aircraftTypeText" style="display:none;" readonly>
         </div>
 
         <!-- Weights -->
         <div>
             <label for="dow">DOW</label>
-            <input type="number" id="dow" step="0.01" value="0">
+            <input type="number" id="dow" step="0.01" value="0" readonly>
         </div>
         <div>
             <label for="totalPax">TOTAL PAX</label>
-            <input type="number" id="totalPax" step="0.01" value="0">
+            <input type="number" id="totalPax" step="1" value="">
         </div>
         <div>
             <label for="avgPaxWeight">AVG PAX WEIGHT</label>
@@ -203,6 +222,19 @@
             <div>
                 <label for="bagsPerULD">AVG BAGS PER ULD</label>
                 <input type="number" id="bagsPerULD" step="0.01" value="0">
+            </div>
+        </div>
+
+        <!-- Compiled By & Notes row -->
+        <div style="grid-column: 1 / -1; display: grid; grid-template-columns: 200px 1fr; gap: 20px; margin-top: 10px;">
+            <div>
+                <label for="compiledBy">COMPILED BY</label>
+                <input type="text" id="compiledBy" style="text-transform:uppercase; width:100%;">
+            </div>
+            <div style="width: 100%;">
+                <label for="notes">NOTES</label>
+                <textarea id="notes"
+                    style="width:100%; max-width: none; height:100px; resize: none; box-sizing: border-box;"></textarea>
             </div>
         </div>
     </div>
@@ -240,9 +272,66 @@
     </div>
 
     <script>
+        // Load aircraft data from CSV
+        const aircraftData = [];
+        fetch('aircraft.csv')
+            .then(response => response.text())
+            .then(text => {
+                const lines = text.trim().split('\n').slice(1);
+                lines.forEach(line => {
+                    const [registration, dow, type] = line.split(',');
+                    aircraftData.push({ registration, dow: parseFloat(dow), type });
+                });
+                populateAircraftSelect();
+            });
+
+        const aircraftSelect = document.getElementById("aircraftSelect");
         const aircraftType = document.getElementById("aircraftType");
+        const aircraftTypeText = document.getElementById("aircraftTypeText");
+        const dowInput = document.getElementById("dow");
         const wideFields = document.getElementById("wideBodyFields");
-        const inputs = document.querySelectorAll("input, select");
+
+        function updateInputListeners() {
+            const inputs = document.querySelectorAll("input:not([readonly]), select:not([disabled]), textarea");
+            inputs.forEach(input => {
+                input.removeEventListener("input", calculate);
+                input.addEventListener("input", calculate);
+            });
+        }
+
+        function populateAircraftSelect() {
+            aircraftData.forEach(ac => {
+                const option = document.createElement("option");
+                option.value = ac.registration;
+                option.text = ac.registration;
+                aircraftSelect.appendChild(option);
+            });
+        }
+
+        // When aircraft is selected
+        aircraftSelect.addEventListener("change", () => {
+            const selected = aircraftData.find(ac => ac.registration === aircraftSelect.value);
+            if (selected) {
+                dowInput.value = selected.dow;
+                aircraftType.style.display = "none";
+                aircraftTypeText.style.display = "block";
+                aircraftTypeText.value = selected.type;
+                wideFields.style.display = (selected.type === "Wide") ? "grid" : "none";
+                calculate();
+                updateInputListeners();
+            } else {
+                aircraftType.style.display = "block";
+                aircraftTypeText.style.display = "none";
+                dowInput.value = 0;
+                updateInputListeners();
+            }
+        });
+
+        aircraftType.addEventListener("change", () => {
+            wideFields.style.display = (aircraftType.value === "Wide") ? "grid" : "none";
+            calculate();
+            updateInputListeners();
+        });
 
         function calculate() {
             const flightNumber = document.getElementById("flightNumber").value;
@@ -253,7 +342,7 @@
             document.getElementById("flightDetails").innerText =
                 `${flightNumber} (${origin}→${destination}) STD: ${std}`;
 
-            let dow = parseFloat(document.getElementById("dow").value) || 0;
+            let dow = parseFloat(dowInput.value) || 0;
             let totalPax = parseFloat(document.getElementById("totalPax").value) || 0;
             let avgPaxWeight = parseFloat(document.getElementById("avgPaxWeight").value) || 0;
             let avgBags = parseFloat(document.getElementById("avgBags").value) || 0;
@@ -266,7 +355,8 @@
             let totalBagWeight = Math.ceil(totalBags * avgBagsWeight);
 
             let totalULDs = 0, totalULDTare = 0;
-            if (aircraftType.value === "Wide") {
+            const currentType = aircraftTypeText.style.display === "block" ? aircraftTypeText.value : aircraftType.value;
+            if (currentType === "Wide") {
                 let avgULDWeight = parseFloat(document.getElementById("avgULDWeight").value) || 0;
                 let bagsPerULD = parseFloat(document.getElementById("bagsPerULD").value) || 1;
                 totalULDs = Math.ceil(totalBags / bagsPerULD);
@@ -288,55 +378,39 @@
             document.getElementById("zfw").innerText = zfw;
         }
 
-        aircraftType.addEventListener("change", () => {
-            wideFields.style.display = (aircraftType.value === "Wide") ? "grid" : "none";
-            calculate();
-        });
+        updateInputListeners();
+        window.onload = () => {
+            updateInputListeners();
+            setTimeout(calculate, 100);
+        };
 
-        inputs.forEach(input => input.addEventListener("input", calculate));
-        window.onload = calculate;
+        function saveData() {
+            const data = {
+                aircraft: aircraftSelect.value,
+                flightNumber: document.getElementById("flightNumber").value,
+                origin: document.getElementById("origin").value,
+                destination: document.getElementById("destination").value,
+                std: document.getElementById("std").value,
+                dow: dowInput.value,
+                totalPax: document.getElementById("totalPax").value,
+                avgPaxWeight: document.getElementById("avgPaxWeight").value,
+                avgBags: document.getElementById("avgBags").value,
+                avgBagsWeight: document.getElementById("avgBagsWeight").value,
+                cargoWeight: document.getElementById("cargoWeight").value,
+                serviceWeight: document.getElementById("serviceWeight").value,
+                avgULDWeight: document.getElementById("avgULDWeight").value,
+                bagsPerULD: document.getElementById("bagsPerULD").value,
+                compiledBy: document.getElementById("compiledBy").value,
+                notes: document.getElementById("notes").value
+            };
 
-        function sendEmail() {
-            const flightNumber = document.getElementById("flightNumber").value;
-            const origin = document.getElementById("origin").value;
-            const destination = document.getElementById("destination").value;
-            const std = document.getElementById("std").value;
-            const aircraft = document.getElementById("aircraftType").value;
-            const dow = document.getElementById("dow").value;
-            const totalPax = document.getElementById("totalPax").value;
-            const avgPaxWeight = document.getElementById("avgPaxWeight").value;
-            const avgBags = document.getElementById("avgBags").value;
-            const avgBagsWeight = document.getElementById("avgBagsWeight").value;
-            const cargoWeight = document.getElementById("cargoWeight").value;
-            const serviceWeight = document.getElementById("serviceWeight").value;
-            const avgULDWeight = document.getElementById("avgULDWeight").value;
-            const bagsPerULD = document.getElementById("bagsPerULD").value;
-            const ezfw = document.getElementById("ezfw").innerText;
-            const zfw = document.getElementById("zfw").innerText;
-
-            let body = `EZFW CALCULATOR RAW DATA\n\n` +
-                `Flight: ${flightNumber}\n` +
-                `Origin: ${origin}\n` +
-                `Destination: ${destination}\n` +
-                `STD (UTC): ${std}\n` +
-                `Aircraft Type: ${aircraft}\n\n` +
-                `DOW: ${dow}\n` +
-                `Total Pax: ${totalPax}\n` +
-                `Avg Pax Weight: ${avgPaxWeight}\n` +
-                `Avg Bags per Pax: ${avgBags}\n` +
-                `Avg Bag Weight: ${avgBagsWeight}\n` +
-                `Cargo Weight: ${cargoWeight}\n` +
-                `Service Weight: ${serviceWeight}\n`;
-
-            if (aircraft === "Wide") {
-                body += `Avg ULD Weight: ${avgULDWeight}\n` +
-                    `Bags per ULD: ${bagsPerULD}\n`;
-            }
-
-            body += `\nEZFW: ${ezfw}\nEZFW Rounded: ${zfw}\n`;
-
-            body = encodeURIComponent(body);
-            window.location.href = `mailto:?subject=EZFW Calculator Data&body=${body}`;
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `EZFW_${data.flightNumber || 'data'}_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
         }
     </script>
 
