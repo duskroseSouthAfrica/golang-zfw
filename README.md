@@ -7,7 +7,7 @@ This project is structured as a **Go (Golang) web server** serving static HTML, 
 ## ✨ Features
 
 * **Go Server Backend:** Uses the `net/http` package to securely serve the frontend assets.
-* **Dynamic Aircraft Selection:** Loads aircraft-specific data (Registration, DOW, and Type) from the `aircraft.csv` file.
+* **Dynamic Aircraft Selection:** Loads aircraft-specific data (Registration, Dry Operating Weight (DOW), and Type) from the `aircraft.csv` file.
 * **Automated Weight Calculations:** Instantly computes Total Passenger Weight, Total Bag Weight, and Total ULD Tare based on user inputs.
 * **Wide Body Logic:** Automatically switches to calculate Unit Load Device (ULD) requirements (Total ULDs, Total ULD Tare) when a Wide Body aircraft is selected.
 * **Zero Fuel Weight (ZFW) Rounding:** Applies the industry standard rounding rule: EZFW is rounded up to the nearest 100 units.
